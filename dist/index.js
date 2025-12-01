@@ -2,17 +2,45 @@
 'use strict';
 
 /**
+ * SGNL Actions - Authentication Utilities
+ *
+ * Shared authentication utilities for SGNL actions.
+ * Supports: Bearer Token, Basic Auth, OAuth2 Client Credentials, OAuth2 Authorization Code
+ */
+
+
+/**
+ * Get the base URL/address for API calls
+ * @param {Object} params - Request parameters
+ * @param {string} [params.address] - Address from params
+ * @param {Object} context - Execution context
+ * @returns {string} Base URL
+ */
+function getBaseUrl(params, context) {
+  const env = context.environment || {};
+  const address = params?.address || env.ADDRESS;
+
+  if (!address) {
+    throw new Error('No URL specified. Provide address parameter or ADDRESS environment variable');
+  }
+
+  // Remove trailing slash if present
+  return address.endsWith('/') ? address.slice(0, -1) : address;
+}
+
+/**
  * Okta Update User Action
  *
  * Updates an existing user's profile in Okta using their login/email as identifier.
  * Supports optional firstName, lastName, email, department, employeeNumber, and additionalProfileAttributes.
  */
 
+
 /**
  * Helper function to update a user in Okta
  * @private
  */
-async function updateUser(params, oktaDomain, authToken) {
+async function updateUser(params, baseUrl, authToken) {
   const { login, firstName, lastName, email, department, employeeNumber, additionalProfileAttributes } = params;
 
   // Build profile object with only fields that are provided
@@ -57,10 +85,12 @@ async function updateUser(params, oktaDomain, authToken) {
 
   // Encode the login to handle special characters like @ in email addresses
   const encodedLogin = encodeURIComponent(login);
-  const url = new URL(`/api/v1/users/${encodedLogin}`, `https://${oktaDomain}`);
+  // Build URL using base URL (already cleaned by getBaseUrl)
+  const url = `${baseUrl}/api/v1/users/${encodedLogin}`;
+  // Okta uses SSWS prefix for API tokens
   const authHeader = authToken.startsWith('SSWS ') ? authToken : `SSWS ${authToken}`;
 
-  const response = await fetch(url.toString(), {
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Authorization': authHeader,
@@ -91,7 +121,7 @@ var script = {
    * @returns {Object} Job results with updated user information
    */
   invoke: async (params, context) => {
-    const { login, oktaDomain } = params;
+    const { login } = params;
 
     console.log(`Starting Okta user update for ${login}`);
 
@@ -99,9 +129,9 @@ var script = {
     if (!login || typeof login !== 'string') {
       throw new Error('Invalid or missing login parameter');
     }
-    if (!oktaDomain || typeof oktaDomain !== 'string') {
-      throw new Error('Invalid or missing oktaDomain parameter');
-    }
+
+    // Get base URL using utility function
+    const baseUrl = getBaseUrl(params, context);
 
     // Validate Okta API token is present
     if (!context.secrets?.BEARER_AUTH_TOKEN) {
@@ -111,7 +141,7 @@ var script = {
     // Make the API request to update user
     const response = await updateUser(
       params,
-      oktaDomain,
+      baseUrl,
       context.secrets.BEARER_AUTH_TOKEN
     );
 
