@@ -119,11 +119,6 @@ export default {
 
     console.log(`Starting Okta user update for ${login}`);
 
-    // Validate required inputs
-    if (!login || typeof login !== 'string') {
-      throw new Error('Invalid or missing login parameter');
-    }
-
     // Get base URL using utility function
     const baseUrl = getBaseURL(resolvedParams, context);
 
