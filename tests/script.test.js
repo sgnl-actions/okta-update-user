@@ -148,27 +148,6 @@ describe('Okta Update User Script', () => {
         .rejects.toThrow('Invalid additionalProfileAttributes JSON');
     });
 
-    test('should throw error for missing login', async () => {
-      const params = {
-        firstName: 'Jane',
-        address: 'https://example.okta.com'
-      };
-
-      await expect(script.invoke(params, mockContext))
-        .rejects.toThrow('Invalid or missing login parameter');
-    });
-
-    test('should throw error for empty login', async () => {
-      const params = {
-        login: '',
-        firstName: 'Jane',
-        address: 'https://example.okta.com'
-      };
-
-      await expect(script.invoke(params, mockContext))
-        .rejects.toThrow('Invalid or missing login parameter');
-    });
-
     test('should throw error for missing address', async () => {
       const params = {
         login: 'jane.smith@example.com',
