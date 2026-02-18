@@ -219,7 +219,7 @@ async function updateUser(params, baseUrl, headers) {
       const additionalAttrs = JSON.parse(additionalProfileAttributes);
       Object.assign(profile, additionalAttrs);
     } catch (error) {
-      throw new Error(`Invalid additionalProfileAttributes JSON: ${error.message}`);
+      throw new Error(`Invalid additionalProfileAttributes JSON: ${error.message}`, { cause: error });
     }
   }
 
@@ -289,7 +289,7 @@ var script = {
     // Get base URL using utility function
     const baseUrl = getBaseURL(params, context);
 
-     // Get headers using utility function
+    // Get headers using utility function
     let headers = await createAuthHeaders(context);
 
     // Handle Okta's SSWS token format - only for Bearer token auth mode
